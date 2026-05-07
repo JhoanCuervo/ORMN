@@ -23,8 +23,8 @@ module.exports = {
         }),
     ],
     optimization: {
-        minimize: false,
-        //minimizer: [new TerserPlugin()],
+        minimize: true,
+        minimizer: [new TerserPlugin()],
     },
 
     devtool: false,
