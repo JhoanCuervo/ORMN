@@ -5,4 +5,4 @@
  */
 
 import { openDb } from "./core/Ormn";
-global.ORMN = { openDb };
+global.openDb = openDb;
