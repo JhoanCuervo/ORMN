@@ -19,6 +19,16 @@
 
 ---
 
+## Extensión para VS Code
+
+Instalá [ORMN Snippets](https://marketplace.visualstudio.com/items?itemName=JhoanNicolasCuervoLozada.ormn-snippets) desde el marketplace de VS Code para autocompletar todos los métodos de ORMN con snippets.
+
+[![VS Code Marketplace](https://img.shields.io/badge/VS%20Code-ORMN%20Snippets-blue?logo=visualstudiocode)](https://marketplace.visualstudio.com/items?itemName=JhoanNicolasCuervoLozada.ormn-snippets)
+
+Repositorio: [github.com/JhoanCuervo/vscode-ormn](https://github.com/JhoanCuervo/vscode-ormn)
+
+---
+
 ## Primeros pasos
 
 ```js
