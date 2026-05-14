@@ -33,15 +33,12 @@ Repositorio: [github.com/JhoanCuervo/vscode-ormn](https://github.com/JhoanCuervo
 
 ```js
 function miFuncion() {
-  // Abrir tu spreadsheet
   const db = ORMN.openDb("ID_DE_TU_SPREADSHEET");
 
-  // Obtener todas las pestañas como tablas
-  const { Finanzas, Clientes } = db._getTables();
+  const { Usuarios } = db._getTables();
 
-  // Leer todos los registros
-  const todos = Finanzas._all();
-  console.log(todos.data);  // [{ id: "...", Store: "Nomina", ... }, ...]
+  const todos = Usuarios._all();
+  console.log(todos.data);  // [{ id: 1, nombre: "Nico", email: "nico@mail.com", ... }, ...]
 }
 ```
 
@@ -58,13 +55,17 @@ Cada pestaña de tu spreadsheet se convierte en un objeto con métodos prefijado
 | `tabla._headers` | `string[]` | Nombres de columna (primera fila) |
 | `tabla._count()` | `number` | Total de filas de datos |
 | `tabla._lastRow()` | `object \| undefined` | Última fila registrada |
+| `tabla._incrementId()` | `number` | Siguiente ID disponible (cantidad de filas + 1) |
+| `tabla._uuid()` | `string` | Genera un UUID (vía `Utilities.getUuid()`) |
 
 ```js
-const { Bills } = db._getTables();
+const { Usuarios } = db._getTables();
 
-console.log(Bills._headers);     // ["id", "Date", "Hour", "Store", ...]
-console.log(Bills._count());     // 150
-console.log(Bills._lastRow());   // { id: "...", Store: "Ultimo", ... }
+console.log(Usuarios._headers);      // ["id", "nombre", "email", "edad", "activo"]
+console.log(Usuarios._count());      // 150
+console.log(Usuarios._lastRow());    // { id: 150, nombre: "Ultimo", ... }
+console.log(Usuarios._incrementId());// 151
+console.log(Usuarios._uuid());       // "a1b2c3d4-..."
 ```
 
 ---
@@ -76,8 +77,8 @@ console.log(Bills._lastRow());   // { id: "...", Store: "Ultimo", ... }
 | `tabla._all()` | `{ data: [...] }` | Todos los registros |
 
 ```js
-const todos = Bills._all();
-todos.data.forEach(row => console.log(row.Store));
+const todos = Usuarios._all();
+todos.data.forEach(u => console.log(u.nombre));
 ```
 
 ---
@@ -93,21 +94,21 @@ todos.data.forEach(row => console.log(row.Store));
 
 ```js
 // Buscar por ID
-const registro = Bills._find("c8c8a084-7f70-4f6f-a378-7c833f105ca4");
+const user = Usuarios._find(42);
 
 // Primera coincidencia
-const primero = Bills._firstBy("Store", "Nomina");
+const primero = Usuarios._firstBy("nombre", "Nico");
 
 // Búsqueda sin importar mayúsculas/minúsculas
-const ci = Bills._firstBy("store", "nomina", { caseInsensitive: true });
+const ci = Usuarios._firstBy("nombre", "nico", { caseInsensitive: true });
 
 // Todas las coincidencias
-const resultados = Bills._findManyBy("Status", "income");
-console.log(resultados.data.length);
+const activos = Usuarios._findManyBy("activo", true);
+console.log(activos.data.length);
 
 // Verificar existencia
-if (Bills._exist("Store", "Nomina")) {
-  console.log("Encontrado");
+if (Usuarios._exist("email", "nico@mail.com")) {
+  console.log("El usuario ya existe");
 }
 ```
 
@@ -124,24 +125,24 @@ Escribí condiciones en JavaScript usando `{}` como placeholder de cada fila.
 
 ```js
 // Comparación numérica
-Bills._firstByQuery(`{}.Value > 1000000`);
+Usuarios._firstByQuery(`{}.edad > 30`);
 
 // Igualdad
-Bills._findManyByQuery(`{}.Status === "income"`);
+Usuarios._findManyByQuery(`{}.activo === true`);
 
 // AND y OR
-Bills._findManyByQuery(`{}.Store === "Nomina" && {}.Value >= 5000000`);
+Usuarios._findManyByQuery(`{}.edad >= 18 && {}.activo === true`);
 
 // Negación
-Bills._findManyByQuery(`{}.Method !== "QR"`);
+Usuarios._findManyByQuery(`{}.email !== ""`);
 
 // Métodos de string
-Bills._findManyByQuery(`{}.Store.includes("Nomi")`);
-Bills._findManyByQuery(`{}.Concept.startsWith("Test")`);
+Usuarios._findManyByQuery(`{}.nombre.includes("Nic")`);
+Usuarios._findManyByQuery(`{}.email.endsWith("@gmail.com")`);
 
-// Comparar con fechas (usando variable externa)
+// Comparar con fechas
 var fecha = new Date("2025-01-01");
-Bills._findManyByQuery(`{}.Date > new Date("${fecha.toISOString()}")`);
+Usuarios._findManyByQuery(`{}.creado > new Date("${fecha.toISOString()}")`);
 ```
 
 ---
@@ -157,22 +158,19 @@ Bills._findManyByQuery(`{}.Date > new Date("${fecha.toISOString()}")`);
 
 ```js
 // Una fila
-const nuevo = Bills._create({
-  id: Utilities.getUuid(),
-  Date: new Date(),
-  Store: "Mi Tienda",
-  Value: 1500,
-  Method: "Tarjeta",
-  Status: "income",
-  Category: 2,
-  Concept: "Venta"
+const nuevo = Usuarios._create({
+  id: Usuarios._uuid(),
+  nombre: "Nico",
+  email: "nico@mail.com",
+  edad: 28,
+  activo: true
 });
 console.log(nuevo._rowIndex);  // posición de la fila en el sheet
 
 // Varias filas a la vez
-const lote = Bills._createMany([
-  { id: Utilities.getUuid(), Date: new Date(), Store: "A", Value: 100, Method: "Efectivo", Status: "income", Category: 0, Concept: "" },
-  { id: Utilities.getUuid(), Date: new Date(), Store: "B", Value: 200, Method: "Efectivo", Status: "income", Category: 0, Concept: "" },
+const lote = Usuarios._createMany([
+  { id: Usuarios._uuid(), nombre: "Ana", email: "ana@mail.com", edad: 32, activo: true },
+  { id: Usuarios._uuid(), nombre: "Luis", email: "luis@mail.com", edad: 25, activo: false },
 ]);
 console.log(lote.data.length);  // 2
 ```
@@ -188,10 +186,10 @@ console.log(lote.data.length);  // 2
 Modificá las propiedades directamente y llamá `_save()`:
 
 ```js
-const fila = Bills._find("c8c8a084-7f70-4f6f-a378-7c833f105ca4");
-fila.Store = "Tienda Editada";
-fila.Value = 8888;
-fila._save();
+const user = Usuarios._find(42);
+user.nombre = "Nicolas";
+user.edad = 29;
+user._save();
 ```
 
 ---
@@ -206,19 +204,19 @@ fila._save();
 
 ```js
 // Individual
-const fila = Bills._find("abc-123...");
-fila._delete();
+const user = Usuarios._find(42);
+user._delete();
 
 // Masivo — eliminar todo lo que coincida con la búsqueda
-const busqueda = Bills._findManyBy("Method", "Test");
-busqueda._delete();
+const inactivos = Usuarios._findManyBy("activo", false);
+inactivos._delete();
 
 // Deshacer un createMany
-const lote = Bills._createMany([...]);
+const lote = Usuarios._createMany([...]);
 lote._delete();
 
 // Toda la tabla (¡CUIDADO!)
-Bills._deleteAll();
+Usuarios._deleteAll();
 ```
 
 ---
@@ -266,6 +264,8 @@ const db = ORMN.openDb("ID...", {
 | `_headers` | `string[]` | Nombres de columnas |
 | `_count()` | `number` | Total de registros |
 | `_lastRow()` | `object \| undefined` | Último registro |
+| `_incrementId()` | `number` | Siguiente ID disponible |
+| `_uuid()` | `string` | Genera un UUID |
 | `_all()` | `{ data: [...] }` | Todos los registros |
 | `_find(id)` | `object \| null` | Buscar por ID |
 | `_firstBy(col, val, opts?)` | `object \| null` | Primera coincidencia |

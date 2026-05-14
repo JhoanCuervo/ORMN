@@ -62,6 +62,11 @@ const createQueryMethods = (driver, options) => {
         return rows[rows.length - 1]
     }
 
+    const incrementId = (sheetName) => {
+        const { rows } = driver.readAll(sheetName);
+        return rows.length + 1;
+    }
+
     return {
         count,
         findById,
@@ -70,7 +75,8 @@ const createQueryMethods = (driver, options) => {
         queryFirst,
         queryMany,
         existRow,
-        lastRow
+        lastRow,
+        incrementId
     };
 };
 

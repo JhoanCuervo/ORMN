@@ -18,6 +18,8 @@ const injectMethods = (sheet, sheetName, driver, queryMethods, options) => {
     sheet._findManyByQuery = (q) => queryMethods.queryMany(sheetName, q);
     sheet._exist = (col, val, opts) => queryMethods.existRow(sheetName, col, val, opts);
     sheet._lastRow = () => queryMethods.lastRow(sheetName);
+    sheet._incrementId = () => queryMethods.incrementId(sheetName);
+    sheet._uuid = () => Utilities.getUuid();
     if (options.enableDeleteAll) {
         sheet._deleteAll = () => driver.deleteAll(sheetName);
     }

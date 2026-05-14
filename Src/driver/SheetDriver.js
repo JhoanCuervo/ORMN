@@ -30,27 +30,57 @@ const createSheetDriver = (spreadsheet, options) => {
     const readAll = (sheetName) => {
         const sheet = getSheet(sheetName);
         const range = sheet.getDataRange().getValues();
+        const { includeRowIndex, enableDelete, enableSave } = options;
 
+        // Si no hay suficientes filas para datos
         if (range.length <= CONSTANTS.DATA_START_ROW_INDEX) {
-            const headers = range.length > CONSTANTS.HEADERS_ROW_INDEX ? range[CONSTANTS.HEADERS_ROW_INDEX] : [];
-            return { headers, rows: [] };
+            const rawHeaders =
+                range.length > CONSTANTS.HEADERS_ROW_INDEX
+                    ? range[CONSTANTS.HEADERS_ROW_INDEX]
+                    : [];
+
+            const hasContent = rawHeaders.some(
+                (h) => h !== "" && h != null
+            );
+
+            const headers = hasContent ? rawHeaders : [];
+
+            return {
+                headers,
+                rows: [],
+            };
         }
 
         const headers = range[CONSTANTS.HEADERS_ROW_INDEX];
         const rows = [];
-        const { includeRowIndex, enableDelete, enableSave } = options;
 
         for (let i = CONSTANTS.DATA_START_ROW_INDEX; i < range.length; i++) {
             const obj = rowToObject(headers, range[i]);
 
-            if (includeRowIndex) obj._rowIndex = i;
-            if (enableDelete) obj._delete = () => deleteRow(sheetName, i);
-            if (enableSave) obj._save = () => updateRow(sheetName, i, objectToRow(headers, obj));
+            if (includeRowIndex) {
+                obj._rowIndex = i;
+            }
+
+            if (enableDelete) {
+                obj._delete = () => deleteRow(sheetName, i);
+            }
+
+            if (enableSave) {
+                obj._save = () =>
+                    updateRow(
+                        sheetName,
+                        i,
+                        objectToRow(headers, obj)
+                    );
+            }
 
             rows.push(obj);
         }
 
-        return { headers, rows };
+        return {
+            headers,
+            rows,
+        };
     };
 
     const readAllWrapped = (sheetName) => {
@@ -112,7 +142,7 @@ const createSheetDriver = (spreadsheet, options) => {
 
     const createManyRows = (sheetName, dataArray) => {
         let { headers } = readAll(sheetName);
-
+        console.log(headers);
         if (headers.length === 0) {
             headers = Object.keys(dataArray[0] || {});
             spreadsheet.getSheetByName(sheetName).getRange(1, 1, 1, headers.length).setValues([headers]);
